@@ -1,3 +1,16 @@
+/*
+        ukazka volania bash commandu
+
+        var sys = require('sys')
+        var exec = require('child_process').exec;
+
+        function puts(error, stdout, stderr) { sys.puts(stdout) }
+        exec("ls -la", function(err, stdout, stderr) {
+          console.log(stdout);
+        });
+      */
+      
+      
       //GPIO 
       var Gpio = require('onoff').Gpio; //include onoff to interact with the GPIO
       var ranoButton = new Gpio(18, 'in',  'rising', {debounceTimeout: 10});
@@ -8,6 +21,7 @@
       var io = require('socket.io')(http);
       http.listen(8080); //listen to port 8080
       console.log("STARTED");
+
       function handler (req, res) { //create server
         fs.readFile(__dirname + '/index.html', function(err, data) { //read file index.html in public folder
           if (err) {
@@ -35,6 +49,9 @@
       var playListSleep = new Array();
       var wasRanoButtonPushed = false;//potrebujeme vediet ci sa len skoncila pesnicka alebo som ju vypol 
 
+      var lastsleepButtonClicked = new Date();
+      var doubleClickInterval = new Timespan();//set some time here, like 1 second
+
       nacitajPlayList();
       pridajOnClick();
 
@@ -59,7 +76,7 @@
             
             if (currentTime == msg) {
               socket.emit('budikHra');//davame vediet na clienta ze uz je budik aby povolil dalsie setovanie
-              var song = playListWake[Math.floor(Math.random()*playListSleep.length)];//zober random songu z playlistu
+              var song = playListWake[Math.floor(Math.random()*playListWake.length)];//zober random songu z playlistu
               song = "./wake/"+song;
               musicWake.play(song);
               clearInterval(interval);
@@ -78,7 +95,7 @@
 //ked skonci ranna pesnicka chceme dalsiu ale nie ked bolo stlacene tlacitko
 musicWake.on('complete', function () {
   if(wasRanoButtonPushed != true){
-      var song = playListWake[Math.floor(Math.random()*playListSleep.length)];
+      var song = playListWake[Math.floor(Math.random()*playListWake.length)];
           song = "./wake/"+song;          
           musicWake.play(song);
   }
@@ -97,6 +114,14 @@ musicWake.on('complete', function () {
             console.error('There was an error', err); //output error message to console
             return;
           }         
+          
+          if( lastsleepButtonClicked + doubleClickInterval < Date.now )
+          {
+            //TODO sleep    
+          }
+          
+          lastsleepButtonClicked = Date.now;
+          
           wasRanoButtonPushed = true;//stlacil som tlacitko a teda nechcem aby hrala dalsia pesnicka
           turnOffAlarm(); 
       });
